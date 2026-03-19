@@ -2,360 +2,466 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>App Alimentacion</title>
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#4CAF50">
+    <meta name="theme-color" content="#8ec5fc">
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="manifest" href="manifest.json">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
+        /* --- DISEÑO GLASSMORPHISM & APP NATIVA --- */
         :root {
-            --bg-color: #f4f7f6; --card-bg: #ffffff; --text-main: #333;
-            --primary: #4CAF50; --secondary: #2196F3; --warning: #FFC107; --danger: #F44336;
-            --prot-color: #E91E63; --carb-color: #03A9F4; --gras-color: #FF9800; --combo-color: #9C27B0; --act-color: #00BCD4;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { max-width: 650px; width: 100%; }
-        .card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2, h3 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-        
-        .macro-group { margin-bottom: 12px; }
-        .macro-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9em; margin-bottom: 5px; }
-        .progress-bg { background-color: #e0e0e0; border-radius: 8px; height: 18px; width: 100%; overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: 8px; transition: width 0.4s ease, background-color 0.4s ease; }
-        .text-remaining { font-size: 0.8em; color: #666; margin-top: 2px; display: block; }
-        .text-meta-dinamica { font-size: 0.85em; color: var(--act-color); font-weight: bold; display: block; margin-top: 4px; }
+            --bg-gradient-1: #e0c3fc; 
+            --bg-gradient-2: #8ec5fc;
+            --text-main: #2d3436;
+            --text-muted: #7f8c8d;
+            
+            --primary: #2ecc71; 
+            --secondary: #3498db; 
+            --warning: #f1c40f; 
+            --danger: #e74c3c;
+            --prot-color: #ff7675; 
+            --carb-color: #74b9ff; 
+            --gras-color: #fdcb6e; 
+            --combo-color: #a29bfe; 
+            --act-color: #00cec9;
 
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #8ec5fc;
+            background-image: linear-gradient(62deg, var(--bg-gradient-2) 0%, var(--bg-gradient-1) 100%);
+            background-attachment: fixed;
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 20px 10px 90px 10px; /* Padding inferior grande para la barra de navegación */
+            display: flex; 
+            justify-content: center; 
+            min-height: 100vh;
+        }
+        
+        .container { max-width: 650px; width: 100%; }
+
+        /* SISTEMA DE PESTAÑAS (TABS) */
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* BARRA DE NAVEGACIÓN INFERIOR (ESTILO SPOTIFY) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 calc(10px + env(safe-area-inset-bottom)) 0;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.7em;
+            font-weight: 600;
+            gap: 4px;
+            transition: color 0.3s, transform 0.2s;
+            width: 25%;
+        }
+        
+        .nav-item .material-icons-round { font-size: 26px; transition: transform 0.2s; }
+        .nav-item.active { color: var(--secondary); }
+        .nav-item.active .material-icons-round { transform: scale(1.15); color: var(--secondary); }
+
+        /* TARJETAS GLASSMORPHISM */
+        .card { 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 25px; 
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow); 
+            margin-bottom: 25px; 
+        }
+
+        h2 { margin-top: 0; color: #2c3e50; font-weight: 700; font-size: 1.4em; border-bottom: 2px solid rgba(0,0,0,0.05); padding-bottom: 10px; margin-bottom: 20px; }
+        h3 { font-size: 1.1em; font-weight: 600; color: #34495e; margin-bottom: 15px;}
+        
+        /* Barras Globales */
+        .macro-group { margin-bottom: 15px; }
+        .macro-header { display: flex; justify-content: space-between; font-weight: 600; font-size: 0.95em; margin-bottom: 8px; }
+        .progress-bg { background-color: rgba(0,0,0,0.08); border-radius: 10px; height: 20px; width: 100%; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+        .progress-fill { height: 100%; border-radius: 10px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s ease; }
+        .text-remaining { font-size: 0.8em; color: var(--text-muted); margin-top: 4px; display: block; font-weight: 400;}
+        .text-meta-dinamica { font-size: 0.9em; color: var(--act-color); font-weight: 700; display: block; margin-top: 5px; margin-bottom: 10px;}
+
+        /* Gráficos Circulares y Comidas */
         .meals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .meal-card { background: #fdfdfd; border: 1px solid #eee; padding: 10px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between; }
-        .meal-title { font-weight: bold; text-align: center; margin-bottom: 10px; font-size: 0.9em; color: #555; }
+        .meal-card { background: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.8); padding: 15px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .meal-title { font-weight: 700; text-align: center; margin-bottom: 15px; font-size: 0.95em; color: #2c3e50; }
         .circles-container { display: flex; justify-content: space-around; }
         .circle-wrap { text-align: center; }
-        .circle { width: 45px; height: 45px; border-radius: 50%; background: conic-gradient(#e0e0e0 100%, #e0e0e0 0); display: flex; align-items: center; justify-content: center; margin: 0 auto 5px auto; transition: background 0.4s; }
-        .circle-inner { width: 35px; height: 35px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 0.65em; font-weight: bold; color: #333; }
-        .circle-label { font-size: 0.7em; font-weight: bold; color: #777; }
-        .meal-kcal { text-align: center; font-size: 0.8em; font-weight: bold; color: #666; margin-top: 12px; background: #eee; padding: 4px; border-radius: 4px; }
+        .circle { width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(#e0e0e0 100%, #e0e0e0 0); display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; transition: background 0.5s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);}
+        .circle-inner { width: 38px; height: 38px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.65em; font-weight: 700; color: #333; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .circle-label { font-size: 0.75em; font-weight: 600; color: var(--text-muted); }
+        .meal-kcal { text-align: center; font-size: 0.85em; font-weight: 700; color: #555; margin-top: 15px; background: rgba(0,0,0,0.05); padding: 6px; border-radius: 6px; }
 
-        label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.9em; }
-        select, input, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
+        /* Inputs y Formularios */
+        label { display: block; margin-top: 15px; font-weight: 600; font-size: 0.9em; color: #34495e;}
+        select, input, textarea { width: 100%; padding: 12px 15px; margin-top: 6px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; box-sizing: border-box; font-family: 'Inter', sans-serif; font-size: 15px; background-color: rgba(255,255,255,0.9); transition: border-color 0.3s, box-shadow 0.3s; }
+        select:focus, input:focus, textarea:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); }
         .tara-inputs, .macro-inputs { display: none; gap: 10px; }
         .tara-inputs.active, .macro-inputs.active { display: flex; }
-        .act-seccion { display: none; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #eee; margin-top: 10px; }
+        .act-seccion { display: none; background: rgba(0,0,0,0.02); padding: 15px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05); margin-top: 15px; }
         .act-seccion.active { display: block; }
 
-        button { background-color: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-size: 1em; font-weight: bold; cursor: pointer; margin-top: 15px; transition: opacity 0.3s; }
-        button:hover { opacity: 0.9; }
+        /* Botones Premium */
+        button { background-color: var(--primary); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; font-size: 1em; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; margin-top: 20px; transition: transform 0.1s, box-shadow 0.2s, background-color 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        button:hover { filter: brightness(1.05); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+        button:active { transform: translateY(2px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .btn-blue { background-color: var(--secondary); }
         .btn-cyan { background-color: var(--act-color); }
         .btn-red { background-color: var(--danger); }
         .btn-purple { background-color: var(--combo-color); }
-        .btn-outline-red { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 8px; margin-top: 10px; }
+        .btn-outline-red { background: transparent; border: 2px solid var(--danger); color: var(--danger); box-shadow: none; }
+        .btn-outline-red:hover { background: rgba(231, 76, 60, 0.1); box-shadow: none;}
 
-        .log-item { border-bottom: 1px solid #eee; padding: 10px 0; font-size: 0.9em; }
-        .btn-delete { background: none; border: none; font-size: 1.2em; cursor: pointer; padding: 5px; margin-top: 0; width: auto; color: var(--danger); }
-        .badge { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-right: 5px; }
-        .combo-row { display: flex; gap: 10px; margin-top: 10px; align-items: center; background: #f9f9f9; padding: 5px; border-radius: 6px; border: 1px solid #eee; }
+        /* Historial y Listas */
+        .log-item { border-bottom: 1px solid rgba(0,0,0,0.05); padding: 12px 0; font-size: 0.9em; }
+        .log-item:last-child { border-bottom: none; }
+        .btn-delete { background: none; border: none; font-size: 1.2em; cursor: pointer; padding: 5px; margin-top: 0; width: auto; color: var(--danger); box-shadow: none;}
+        .btn-delete:hover { box-shadow: none; background: rgba(231, 76, 60, 0.1); border-radius: 50%;}
+        .badge { background: rgba(0,0,0,0.05); padding: 4px 8px; border-radius: 6px; font-size: 0.75em; font-weight: 700; margin-right: 6px; letter-spacing: 0.5px;}
+        .combo-row { display: flex; gap: 10px; margin-top: 10px; align-items: center; background: rgba(255,255,255,0.5); padding: 8px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05); }
         
         @media (max-width: 500px) { .meals-grid { grid-template-columns: 1fr; } .combo-row { flex-direction: column; gap: 5px; } }
     </style>
 </head>
 <body>
 
+<nav class="bottom-nav">
+    <a href="#" class="nav-item active" onclick="switchTab('tab-resumen', this)">
+        <span class="material-icons-round">dashboard</span>
+        <span>Resumen</span>
+    </a>
+    <a href="#" class="nav-item" onclick="switchTab('tab-registro', this)">
+        <span class="material-icons-round">add_circle</span>
+        <span>Registro</span>
+    </a>
+    <a href="#" class="nav-item" onclick="switchTab('tab-recetario', this)">
+        <span class="material-icons-round">menu_book</span>
+        <span>Recetario</span>
+    </a>
+    <a href="#" class="nav-item" onclick="switchTab('tab-perfil', this)">
+        <span class="material-icons-round">person</span>
+        <span>Perfil</span>
+    </a>
+</nav>
+
 <div class="container">
 
-    <div class="card">
-        <h2>📊 Totales del Día</h2>
-        
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 250px;">
-                <label style="font-size: 0.85em; color: #555; margin-top: 0;">Día de la Semana:</label>
-                <select id="select-dia" onchange="actualizarDashboard()" style="margin-top: 5px; margin-bottom: 15px; font-weight: bold; background-color: #fff9c4;">
-                    <option value="1">Lunes (Electrotecnia/Campos + Pesas)</option>
-                    <option value="2">Martes (Señales y Sist. + Pesas)</option>
-                    <option value="3">Miércoles (Cálculo/Electro + Pesas 20hs)</option>
-                    <option value="4">Jueves (Cálculo/Campos - Descanso)</option>
-                    <option value="5">Viernes (Pesas Intensidad Elevada)</option>
-                    <option value="6">Sábado (Pesas Intensidad Elevada)</option>
-                    <option value="0">Domingo (Pesas Intensidad Elevada)</option>
-                </select>
-            </div>
-            <div style="flex: 1; min-width: 250px;">
-                <label style="font-size: 0.85em; color: #555; margin-top: 0;">Estrategia Nutricional:</label>
-                <select id="select-objetivo" onchange="actualizarDashboard()" style="margin-top: 5px; margin-bottom: 15px; font-weight: bold; background-color: #f0f8ff;">
-                    <option value="1.10">💪 Volumen (+10%)</option>
-                    <option value="0.95" selected>⚖️ Recomposición (-5%)</option>
-                    <option value="0.80">🔥 Definición (-20%)</option>
-                </select>
-            </div>
-        </div>
-
-        <span id="txt-meta-info" class="text-meta-dinamica">Conectando con la nube...</span>
-        <div class="macro-group" style="margin-top: 10px;"><div class="macro-header"><span>🔥 Calorías</span> <span id="lbl-total-kcal">0 / 0</span></div><div class="progress-bg"><div id="bar-total-kcal" class="progress-fill" style="width: 0%; background-color: var(--warning);"></div></div><span id="rem-total-kcal" class="text-remaining"></span></div>
-        <div class="macro-group"><div class="macro-header"><span>🥩 Proteínas</span> <span id="lbl-total-prot">0 / 0</span></div><div class="progress-bg"><div id="bar-total-prot" class="progress-fill" style="width: 0%; background-color: var(--prot-color);"></div></div><span id="rem-total-prot" class="text-remaining"></span></div>
-        <div class="macro-group"><div class="macro-header"><span>🍚 Carbohidratos</span> <span id="lbl-total-carb">0 / 0</span></div><div class="progress-bg"><div id="bar-total-carb" class="progress-fill" style="width: 0%; background-color: var(--carb-color);"></div></div><span id="rem-total-carb" class="text-remaining"></span></div>
-        <div class="macro-group"><div class="macro-header"><span>🥑 Grasas</span> <span id="lbl-total-gras">0 / 0</span></div><div class="progress-bg"><div id="bar-total-gras" class="progress-fill" style="width: 0%; background-color: var(--gras-color);"></div></div><span id="rem-total-gras" class="text-remaining"></span></div>
-        <button class="btn-red" style="margin-top: 10px;" onclick="reiniciarDia()">🔄 Reiniciar Día</button>
-    </div>
-
-    <div class="card">
-        <h2>🍽️ Desglose por Comidas</h2>
-        <div class="meals-grid">
-            <div class="meal-card">
-                <div class="meal-title">
-                    ☕ Desayuno 
-                    <div style="margin-top: 5px;">
-                        <span id="badge-ig-desayuno" class="badge" style="font-size:0.7em;">IG N/A</span>
-                        <span id="badge-leu-desayuno" class="badge" style="font-size:0.7em;">Leu: 0.0g</span>
-                    </div>
-                </div>
-                <div class="circles-container">
-                    <div class="circle-wrap"><div class="circle" id="circ-desayuno-prot"><div class="circle-inner" id="txt-desayuno-prot">0/0</div></div><div class="circle-label">Prot</div></div>
-                    <div class="circle-wrap"><div class="circle" id="circ-desayuno-carb"><div class="circle-inner" id="txt-desayuno-carb">0/0</div></div><div class="circle-label">Carb</div></div>
-                    <div class="circle-wrap"><div class="circle" id="circ-desayuno-gras"><div class="circle-inner" id="txt-desayuno-gras">0/0</div></div><div class="circle-label">Gras</div></div>
-                </div>
-                <div class="meal-kcal" id="kcal-desayuno">🔥 0 / 0 kcal</div>
-            </div>
-            <div class="meal-card">
-                <div class="meal-title">
-                    🍛 Almuerzo 
-                    <div style="margin-top: 5px;">
-                        <span id="badge-ig-almuerzo" class="badge" style="font-size:0.7em;">IG N/A</span>
-                        <span id="badge-leu-almuerzo" class="badge" style="font-size:0.7em;">Leu: 0.0g</span>
-                    </div>
-                </div>
-                <div class="circles-container">
-                    <div class="circle-wrap"><div class="circle" id="circ-almuerzo-prot"><div class="circle-inner" id="txt-almuerzo-prot">0/0</div></div><div class="circle-label">Prot</div></div>
-                    <div class="circle-wrap"><div class="circle" id="circ-almuerzo-carb"><div class="circle-inner" id="txt-almuerzo-carb">0/0</div></div><div class="circle-label">Carb</div></div>
-                    <div class="circle-wrap"><div class="circle" id="circ-almuerzo-gras"><div class="circle-inner" id="txt-almuerzo-gras">0/0</div></div><div class="circle-label">Gras</div></div>
-                </div>
-                <div class="meal-kcal" id="kcal-almuerzo">🔥 0 / 0 kcal</div>
-            </div>
-            <div class="meal-card">
-                <div class="meal-title">
-                    🍎 Merienda 
-                    <div style="margin-top: 5px;">
-                        <span id="badge-ig-merienda" class="badge" style="font-size:0.7em;">IG N/A</span>
-                        <span id="badge-leu-merienda" class="badge" style="font-size:0.7em;">Leu: 0.0g</span>
-                    </div>
-                </div>
-                <div class="circles-container">
-                    <div class="circle-wrap"><div class="circle" id="circ-merienda-prot"><div class="circle-inner" id="txt-merienda-prot">0/0</div></div><div class="circle-label">Prot</div></div>
-                    <div class="circle-wrap"><div class="circle" id="circ-merienda-carb"><div class="circle-inner" id="txt-merienda-carb">0/0</div></div><div class="circle-label">Carb</div></div>
-                    <div class="circle-wrap"><div class="circle" id="circ-merienda-gras"><div class="circle-inner" id="txt-merienda-gras">0/0</div></div><div class="circle-label">Gras</div></div>
-                </div>
-                <div class="meal-kcal" id="kcal-merienda">🔥 0 / 0 kcal</div>
-            </div>
-            <div class="meal-card">
-                <div class="meal-title">
-                    🥩 Cena 
-                    <div style="margin-top: 5px;">
-                        <span id="badge-ig-cena" class="badge" style="font-size:0.7em;">IG N/A</span>
-                        <span id="badge-leu-cena" class="badge" style="font-size:0.7em;">Leu: 0.0g</span>
-                    </div>
-                </div>
-                <div class="circles-container">
-                    <div class="circle-wrap"><div class="circle" id="circ-cena-prot"><div class="circle-inner" id="txt-cena-prot">0/0</div></div><div class="circle-label">Prot</div></div>
-                    <div class="circle-wrap"><div class="circle" id="circ-cena-carb"><div class="circle-inner" id="txt-cena-carb">0/0</div></div><div class="circle-label">Carb</div></div>
-                    <div class="circle-wrap"><div class="circle" id="circ-cena-gras"><div class="circle-inner" id="txt-cena-gras">0/0</div></div><div class="circle-label">Gras</div></div>
-                </div>
-                <div class="meal-kcal" id="kcal-cena">🔥 0 / 0 kcal</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3>⚖️ Registrar Consumo</h3>
-        <label>¿En qué comida lo ingeriste?</label>
-        <select id="select-comida">
-            <option value="desayuno">☕ Desayuno</option>
-            <option value="almuerzo">🍛 Almuerzo</option>
-            <option value="merienda">🍎 Merienda</option>
-            <option value="cena">🥩 Cena</option>
-        </select>
-        <label>Buscar Alimento o Receta</label>
-        <input type="text" id="input-alimento" list="lista-alimentos" placeholder="Ej: Pechuga, Avena, Panqueque...">
-        <datalist id="lista-alimentos"></datalist>
-        <label>Método de pesaje</label>
-        <select id="select-metodo" onchange="toggleMetodo()">
-            <option value="directo">Peso directo en báscula (g) / Porción de Receta (%)</option>
-            <option value="tara">Diferencia de envase (Tara)</option>
-        </select>
-        <div id="input-directo">
-            <input type="number" id="val-gramos" placeholder="Gramos consumidos (Ej: 50)">
-        </div>
-        <div id="input-tara" class="tara-inputs">
-            <input type="number" id="val-antes" placeholder="Peso ANTES (g)">
-            <input type="number" id="val-despues" placeholder="Peso DESPUÉS (g)">
-        </div>
-        <button onclick="registrarConsumo()">Registrar Consumo</button>
-    </div>
-
-    <div class="card">
-        <h3>📝 Registro de hoy</h3>
-        <div id="historial-lista">
-            <p id="msg-vacio" style="color: #666; font-style: italic;">Aún no has registrado alimentos hoy.</p>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3>➕ Agregar Alimento Simple</h3>
-        <input type="text" id="nuevo-nombre" placeholder="Nombre del nuevo alimento">
-        <div class="macro-inputs active">
-            <input type="number" id="nuevo-prot" placeholder="Prot (g)">
-            <input type="number" id="nuevo-carb" placeholder="Carb (g)">
-            <input type="number" id="nuevo-gras" placeholder="Gras (g)">
-            <input type="number" id="nuevo-ig" placeholder="Índice Glucémico (0-100)" title="Carnes y grasas puras = 0">
-        </div>
-        <div style="margin-top: 10px;">
-            <input type="number" id="nuevo-leu" placeholder="Leucina (g por c/100g)" title="Proteína x 0.09 (Carne/Lácteo) o x 0.07 (Grano)">
-        </div>
-        <button class="btn-blue" onclick="guardarNuevoAlimento()">Guardar Nuevo Alimento</button>
-        <button class="btn-outline-red" onclick="eliminarDeBase()">🗑️ Eliminar alimento escrito arriba de la base</button>
-    </div>
-
-    <div class="card">
-        <h3>🥣 Creador de Recetas (Combos)</h3>
-        <p style="font-size: 0.85em; color: #666; margin-top: 0;">Une varios ingredientes en una sola receta. Al registrarla, ingresar <b>100 gramos equivaldrá a comerte la receta completa</b>, 50g a la mitad, etc.</p>
-        <input type="text" id="combo-nombre" placeholder="Nombre de la Receta (Ej: Panqueque Híbrido)">
-        <div id="combo-ingredientes"></div>
-        <button class="btn-purple" onclick="agregarFilaCombo()">➕ Añadir otro ingrediente</button>
-        <button onclick="guardarCombo()">💾 Guardar Receta</button>
-    </div>
-
-    <div class="card">
-        <h3>📖 Mi Recetario (Desglose)</h3>
-        <p style="font-size: 0.85em; color: #666; margin-top: 0;">Consulta los ingredientes exactos de los combos que has creado.</p>
-        <select id="select-recetario" onchange="mostrarDetalleReceta()">
-            <option value="">-- Seleccionar Receta --</option>
-        </select>
-        <div id="detalle-receta" style="margin-top: 15px; padding: 15px; background: #f0f8ff; border-radius: 6px; border: 1px solid #cce7ff; display: none;"></div>
-        <button class="btn-outline-red" onclick="eliminarReceta()">🗑️ Eliminar Receta Seleccionada</button>
-    </div>
-
-    <div class="card">
-        <h3>📝 Notas de Preparación</h3>
-        <p style="font-size: 0.85em; color: #666; margin-top: 0;">Guarda las instrucciones, tiempos de cocción y el paso a paso de tus comidas favoritas.</p>
-        <input type="text" id="nota-titulo" placeholder="Título (Ej: Masa de Pizza Alta Hidratación)">
-        <textarea id="nota-texto" rows="4" placeholder="Escribe el paso a paso aquí...&#10;1. Mezclar harina y agua.&#10;2. Dejar reposar..."></textarea>
-        <button class="btn-blue" onclick="guardarNotaReceta()">💾 Guardar Instrucciones</button>
-        <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
-        <select id="select-notas" onchange="mostrarNotaReceta()">
-            <option value="">-- Seleccionar Nota --</option>
-        </select>
-        <div id="detalle-nota" style="margin-top: 15px; padding: 15px; background: #fffde7; border-radius: 6px; border: 1px solid #e6ee9c; display: none;">
-            <strong id="detalle-nota-titulo" style="color: var(--secondary); font-size: 1.05em; display: block; margin-bottom: 8px;"></strong>
-            <p id="detalle-nota-texto" style="font-size: 0.9em; color: #444; white-space: pre-wrap; margin: 0; line-height: 1.4;"></p>
-        </div>
-        <button class="btn-outline-red" onclick="eliminarNotaReceta()">🗑️ Eliminar Nota Seleccionada</button>
-    </div>
-
-     <div class="card">
-        <h2>🏃‍♂️ Registro de Actividad Física</h2>
-        <p style="font-size: 0.85em; color: #666; margin-top: 0;">Calcula y suma el gasto de tu entrenamiento a tu objetivo diario.</p>
-        <label>Tipo de Actividad</label>
-        <select id="select-actividad" onchange="toggleActividad()">
-            <option value="">-- Seleccionar --</option>
-            <option value="cardio">Caminar / Trotar / Ciclismo</option>
-            <option value="fuerza">Entrenamiento de Fuerza</option>
-            <option value="deporte">Fútbol / Pádel</option>
-        </select>
-
-        <div id="form-cardio" class="act-seccion">
-            <label>Actividad</label>
-            <select id="cardio-tipo">
-                <option value="caminar">Caminar (Cinta o Calle)</option>
-                <option value="trotar">Trotar / Correr</option>
-                <option value="ciclismo">Ciclismo</option>
-            </select>
+    <div id="tab-resumen" class="tab-content active">
+        <div class="card">
+            <h2>📊 Totales del Día</h2>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 80px;">
-                    <label>Duración (min)</label>
-                    <input type="number" id="cardio-tiempo" placeholder="Ej: 45">
+                <div style="flex: 1; min-width: 250px;">
+                    <label style="margin-top: 0;">Día de la Semana:</label>
+                    <select id="select-dia" onchange="actualizarDashboard()" style="background-color: rgba(255, 249, 196, 0.6);">
+                        <option value="1">Lunes (Electrotecnia/Campos + Pesas)</option>
+                        <option value="2">Martes (Señales y Sist. + Pesas)</option>
+                        <option value="3">Miércoles (Cálculo/Electro + Pesas 20hs)</option>
+                        <option value="4">Jueves (Cálculo/Campos - Descanso)</option>
+                        <option value="5">Viernes (Pesas Intensidad Elevada)</option>
+                        <option value="6">Sábado (Pesas Intensidad Elevada)</option>
+                        <option value="0">Domingo (Pesas Intensidad Elevada)</option>
+                    </select>
                 </div>
-                <div style="flex: 1; min-width: 80px;">
-                    <label>Ritmo (min:seg)</label>
-                    <input type="text" id="cardio-ritmo" placeholder="Ej: 5:30" title="Minutos y segundos por kilómetro">
-                </div>
-                <div style="flex: 1; min-width: 80px;">
-                    <label>Inclinación (%)</label>
-                    <input type="number" id="cardio-inclinacion" placeholder="Ej: 5">
+                <div style="flex: 1; min-width: 250px;">
+                    <label style="margin-top: 0;">Estrategia Nutricional:</label>
+                    <select id="select-objetivo" onchange="actualizarDashboard()" style="background-color: rgba(240, 248, 255, 0.6);">
+                        <option value="1.10">💪 Volumen (+10%)</option>
+                        <option value="0.95" selected>⚖️ Recomposición (-5%)</option>
+                        <option value="0.80">🔥 Definición (-20%)</option>
+                    </select>
                 </div>
             </div>
-            <label>Frecuencia Cardíaca Promedio (Opcional)</label>
-            <input type="number" id="cardio-fc" placeholder="Latidos por min. (Anula lo anterior)">
+
+            <span id="txt-meta-info" class="text-meta-dinamica">Conectando con la nube...</span>
+            <div class="macro-group" style="margin-top: 15px;"><div class="macro-header"><span>🔥 Calorías</span> <span id="lbl-total-kcal">0 / 0</span></div><div class="progress-bg"><div id="bar-total-kcal" class="progress-fill" style="width: 0%; background-color: var(--warning);"></div></div><span id="rem-total-kcal" class="text-remaining"></span></div>
+            <div class="macro-group"><div class="macro-header"><span>🥩 Proteínas</span> <span id="lbl-total-prot">0 / 0</span></div><div class="progress-bg"><div id="bar-total-prot" class="progress-fill" style="width: 0%; background-color: var(--prot-color);"></div></div><span id="rem-total-prot" class="text-remaining"></span></div>
+            <div class="macro-group"><div class="macro-header"><span>🍚 Carbohidratos</span> <span id="lbl-total-carb">0 / 0</span></div><div class="progress-bg"><div id="bar-total-carb" class="progress-fill" style="width: 0%; background-color: var(--carb-color);"></div></div><span id="rem-total-carb" class="text-remaining"></span></div>
+            <div class="macro-group"><div class="macro-header"><span>🥑 Grasas</span> <span id="lbl-total-gras">0 / 0</span></div><div class="progress-bg"><div id="bar-total-gras" class="progress-fill" style="width: 0%; background-color: var(--gras-color);"></div></div><span id="rem-total-gras" class="text-remaining"></span></div>
+            <button class="btn-red" style="margin-top: 15px;" onclick="reiniciarDia()">🔄 Reiniciar Día</button>
         </div>
 
-        <div id="form-fuerza" class="act-seccion">
-            <label>Seleccionar Rutina Precargada</label>
-            <select id="fuerza-rutina" onchange="cargarRutina()">
-                <option value="">-- Elegir Rutina --</option>
-                <option value="push_1_1">Push 1.1 (Pecho y Tríceps)</option>
-                <option value="push_1_2">Push 1.2 (Hombros)</option>
-                <option value="push_2">Push 2</option>
-                <option value="pull_1">Pull 1</option>
-                <option value="pull_2">Pull 2</option>
-                <option value="legs">Legs (Día de Pierna)</option>
-                <option value="cadena_anterior">Cadena Anterior</option>
-                <option value="cadena_posterior">Cadena Posterior</option>
-                <option value="pantorrillas">Pantorrillas</option>
-                <option value="core_1">Abdominales (Peso Corporal)</option>
+        <div class="card">
+            <h2>🍽️ Desglose por Comidas</h2>
+            <div class="meals-grid">
+                <div class="meal-card">
+                    <div class="meal-title">☕ Desayuno <div style="margin-top: 8px;"><span id="badge-ig-desayuno" class="badge">IG N/A</span><span id="badge-leu-desayuno" class="badge">Leu: 0.0g</span></div></div>
+                    <div class="circles-container">
+                        <div class="circle-wrap"><div class="circle" id="circ-desayuno-prot"><div class="circle-inner" id="txt-desayuno-prot">0/0</div></div><div class="circle-label">Prot</div></div>
+                        <div class="circle-wrap"><div class="circle" id="circ-desayuno-carb"><div class="circle-inner" id="txt-desayuno-carb">0/0</div></div><div class="circle-label">Carb</div></div>
+                        <div class="circle-wrap"><div class="circle" id="circ-desayuno-gras"><div class="circle-inner" id="txt-desayuno-gras">0/0</div></div><div class="circle-label">Gras</div></div>
+                    </div>
+                    <div class="meal-kcal" id="kcal-desayuno">🔥 0 / 0 kcal</div>
+                </div>
+                <div class="meal-card">
+                    <div class="meal-title">🍛 Almuerzo <div style="margin-top: 8px;"><span id="badge-ig-almuerzo" class="badge">IG N/A</span><span id="badge-leu-almuerzo" class="badge">Leu: 0.0g</span></div></div>
+                    <div class="circles-container">
+                        <div class="circle-wrap"><div class="circle" id="circ-almuerzo-prot"><div class="circle-inner" id="txt-almuerzo-prot">0/0</div></div><div class="circle-label">Prot</div></div>
+                        <div class="circle-wrap"><div class="circle" id="circ-almuerzo-carb"><div class="circle-inner" id="txt-almuerzo-carb">0/0</div></div><div class="circle-label">Carb</div></div>
+                        <div class="circle-wrap"><div class="circle" id="circ-almuerzo-gras"><div class="circle-inner" id="txt-almuerzo-gras">0/0</div></div><div class="circle-label">Gras</div></div>
+                    </div>
+                    <div class="meal-kcal" id="kcal-almuerzo">🔥 0 / 0 kcal</div>
+                </div>
+                <div class="meal-card">
+                    <div class="meal-title">🍎 Merienda <div style="margin-top: 8px;"><span id="badge-ig-merienda" class="badge">IG N/A</span><span id="badge-leu-merienda" class="badge">Leu: 0.0g</span></div></div>
+                    <div class="circles-container">
+                        <div class="circle-wrap"><div class="circle" id="circ-merienda-prot"><div class="circle-inner" id="txt-merienda-prot">0/0</div></div><div class="circle-label">Prot</div></div>
+                        <div class="circle-wrap"><div class="circle" id="circ-merienda-carb"><div class="circle-inner" id="txt-merienda-carb">0/0</div></div><div class="circle-label">Carb</div></div>
+                        <div class="circle-wrap"><div class="circle" id="circ-merienda-gras"><div class="circle-inner" id="txt-merienda-gras">0/0</div></div><div class="circle-label">Gras</div></div>
+                    </div>
+                    <div class="meal-kcal" id="kcal-merienda">🔥 0 / 0 kcal</div>
+                </div>
+                <div class="meal-card">
+                    <div class="meal-title">🥩 Cena <div style="margin-top: 8px;"><span id="badge-ig-cena" class="badge">IG N/A</span><span id="badge-leu-cena" class="badge">Leu: 0.0g</span></div></div>
+                    <div class="circles-container">
+                        <div class="circle-wrap"><div class="circle" id="circ-cena-prot"><div class="circle-inner" id="txt-cena-prot">0/0</div></div><div class="circle-label">Prot</div></div>
+                        <div class="circle-wrap"><div class="circle" id="circ-cena-carb"><div class="circle-inner" id="txt-cena-carb">0/0</div></div><div class="circle-label">Carb</div></div>
+                        <div class="circle-wrap"><div class="circle" id="circ-cena-gras"><div class="circle-inner" id="txt-cena-gras">0/0</div></div><div class="circle-label">Gras</div></div>
+                    </div>
+                    <div class="meal-kcal" id="kcal-cena">🔥 0 / 0 kcal</div>
+                </div>
+            </div>
+        </div>
+    </div> <div id="tab-registro" class="tab-content">
+        <div class="card">
+            <h3>⚖️ Registrar Consumo</h3>
+            <label>¿En qué comida lo ingeriste?</label>
+            <select id="select-comida">
+                <option value="desayuno">☕ Desayuno</option>
+                <option value="almuerzo">🍛 Almuerzo</option>
+                <option value="merienda">🍎 Merienda</option>
+                <option value="cena">🥩 Cena</option>
             </select>
-            <div id="contenedor-ejercicios" style="margin-top: 15px;"></div>
-        </div>
-
-        <div id="form-deporte" class="act-seccion">
-            <label>Deporte</label>
-            <select id="deporte-tipo">
-                <option value="8.0">Fútbol (8.0 METs promedio)</option>
-                <option value="6.5">Pádel (6.5 METs promedio)</option>
+            <label>Buscar Alimento o Receta</label>
+            <input type="text" id="input-alimento" list="lista-alimentos" placeholder="Ej: Pechuga, Avena, Panqueque...">
+            <datalist id="lista-alimentos"></datalist>
+            <label>Método de pesaje</label>
+            <select id="select-metodo" onchange="toggleMetodo()">
+                <option value="directo">Peso directo en báscula (g) / Porción de Receta (%)</option>
+                <option value="tara">Diferencia de envase (Tara)</option>
             </select>
-            <label>Tiempo neto de juego (minutos)</label>
-            <input type="number" id="deporte-tiempo" placeholder="Ej: 90">
+            <div id="input-directo">
+                <input type="number" id="val-gramos" placeholder="Gramos consumidos (Ej: 50)">
+            </div>
+            <div id="input-tara" class="tara-inputs">
+                <input type="number" id="val-antes" placeholder="Peso ANTES (g)">
+                <input type="number" id="val-despues" placeholder="Peso DESPUÉS (g)">
+            </div>
+            <button onclick="registrarConsumo()">Registrar Consumo</button>
         </div>
-        <button class="btn-cyan" onclick="registrarActividad()">⚡ Sumar al Gasto Diario</button>
-    </div>
 
-    <div class="card" style="border-top: 4px solid var(--secondary);">
-        <h3>💾 Sincronización y Respaldo</h3>
-        <p style="font-size: 0.85em; color: #666; margin-top: 0;">Usa estos botones para pasar tus datos de la PC al celular o viceversa.</p>
-        <button class="btn-blue" onclick="exportarDatos()">📥 Descargar Datos (.txt)</button>
-        <input type="file" id="input-importar" style="display:none" accept=".txt" onchange="importarDatos(this)">
-        <button class="btn-cyan" style="margin-top: 10px;" onclick="document.getElementById('input-importar').click()">📤 Cargar Datos (.txt)</button>
-    </div>
-
-    <div class="card">
-        <h3>👤 Mi Perfil Biométrico</h3>
-        <p style="font-size: 0.85em; color: #666; margin-top: 0;">Actualiza tus datos para que el algoritmo recalcule tu Gasto Calórico Base automáticamente.</p>
-        <div style="display: flex; gap: 10px;">
-            <div style="flex: 1;">
-                <label>Peso (kg)</label>
-                <input type="number" id="input-peso" step="0.1">
-            </div>
-            <div style="flex: 1;">
-                <label>Altura (cm)</label>
-                <input type="number" id="input-altura">
-            </div>
-            <div style="flex: 1;">
-                <label>Edad</label>
-                <input type="number" id="input-edad">
+        <div class="card">
+            <h3>📝 Registro de hoy</h3>
+            <div id="historial-lista">
+                <p id="msg-vacio" style="color: #999; font-style: italic; text-align: center;">Aún no has registrado alimentos hoy.</p>
             </div>
         </div>
-        <button class="btn-blue" onclick="guardarPerfil()">💾 Guardar y Recalcular Gasto</button>
-    </div>
 
-</div>
+        <div class="card">
+            <h2>🏃‍♂️ Registro de Actividad Física</h2>
+            <p style="font-size: 0.85em; color: var(--text-muted); margin-top: 0;">Calcula y suma el gasto de tu entrenamiento a tu objetivo diario.</p>
+            <label>Tipo de Actividad</label>
+            <select id="select-actividad" onchange="toggleActividad()">
+                <option value="">-- Seleccionar --</option>
+                <option value="cardio">Caminar / Trotar / Ciclismo</option>
+                <option value="fuerza">Entrenamiento de Fuerza</option>
+                <option value="deporte">Fútbol / Pádel</option>
+            </select>
 
-<script>
+            <div id="form-cardio" class="act-seccion">
+                <label>Actividad</label>
+                <select id="cardio-tipo">
+                    <option value="caminar">Caminar (Cinta o Calle)</option>
+                    <option value="trotar">Trotar / Correr</option>
+                    <option value="ciclismo">Ciclismo</option>
+                </select>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 80px;">
+                        <label>Duración (min)</label>
+                        <input type="number" id="cardio-tiempo" placeholder="Ej: 45">
+                    </div>
+                    <div style="flex: 1; min-width: 80px;">
+                        <label>Ritmo (min:seg)</label>
+                        <input type="text" id="cardio-ritmo" placeholder="Ej: 5:30" title="Minutos y segundos por kilómetro">
+                    </div>
+                    <div style="flex: 1; min-width: 80px;">
+                        <label>Inclinación (%)</label>
+                        <input type="number" id="cardio-inclinacion" placeholder="Ej: 5">
+                    </div>
+                </div>
+                <label>Frecuencia Cardíaca Promedio (Opcional)</label>
+                <input type="number" id="cardio-fc" placeholder="Latidos por min. (Anula lo anterior)">
+            </div>
+
+            <div id="form-fuerza" class="act-seccion">
+                <label>Seleccionar Rutina Precargada</label>
+                <select id="fuerza-rutina" onchange="cargarRutina()">
+                    <option value="">-- Elegir Rutina --</option>
+                    <option value="push_1_1">Push 1.1 (Pecho y Tríceps)</option>
+                    <option value="push_1_2">Push 1.2 (Hombros)</option>
+                    <option value="push_2">Push 2</option>
+                    <option value="pull_1">Pull 1</option>
+                    <option value="pull_2">Pull 2</option>
+                    <option value="legs">Legs (Día de Pierna)</option>
+                    <option value="cadena_anterior">Cadena Anterior</option>
+                    <option value="cadena_posterior">Cadena Posterior</option>
+                    <option value="pantorrillas">Pantorrillas</option>
+                    <option value="core_1">Abdominales (Peso Corporal)</option>
+                </select>
+                <div id="contenedor-ejercicios" style="margin-top: 15px;"></div>
+            </div>
+
+            <div id="form-deporte" class="act-seccion">
+                <label>Deporte</label>
+                <select id="deporte-tipo">
+                    <option value="8.0">Fútbol (8.0 METs promedio)</option>
+                    <option value="6.5">Pádel (6.5 METs promedio)</option>
+                </select>
+                <label>Tiempo neto de juego (minutos)</label>
+                <input type="number" id="deporte-tiempo" placeholder="Ej: 90">
+            </div>
+            <button class="btn-cyan" onclick="registrarActividad()">⚡ Sumar al Gasto Diario</button>
+        </div>
+    </div> <div id="tab-recetario" class="tab-content">
+        <div class="card">
+            <h3>➕ Agregar Alimento Simple</h3>
+            <input type="text" id="nuevo-nombre" placeholder="Nombre del nuevo alimento">
+            <div class="macro-inputs active">
+                <input type="number" id="nuevo-prot" placeholder="Prot (g)">
+                <input type="number" id="nuevo-carb" placeholder="Carb (g)">
+                <input type="number" id="nuevo-gras" placeholder="Gras (g)">
+                <input type="number" id="nuevo-ig" placeholder="Índice Glucémico (0-100)" title="Carnes y grasas puras = 0">
+            </div>
+            <div style="margin-top: 10px;">
+                <input type="number" id="nuevo-leu" placeholder="Leucina (g por c/100g)" title="Proteína x 0.09 (Carne/Lácteo) o x 0.07 (Grano)">
+            </div>
+            <button class="btn-blue" onclick="guardarNuevoAlimento()">Guardar Nuevo Alimento</button>
+            <button class="btn-outline-red" onclick="eliminarDeBase()">🗑️ Eliminar alimento escrito arriba de la base</button>
+        </div>
+
+        <div class="card">
+            <h3>🥣 Creador de Recetas (Combos)</h3>
+            <p style="font-size: 0.85em; color: var(--text-muted); margin-top: 0; line-height: 1.4;">Une varios ingredientes en una sola receta. Al registrarla, ingresar <b>100 gramos equivaldrá a comerte la receta completa</b>, 50g a la mitad, etc.</p>
+            <input type="text" id="combo-nombre" placeholder="Nombre de la Receta (Ej: Panqueque Híbrido)">
+            <div id="combo-ingredientes"></div>
+            <button class="btn-purple" onclick="agregarFilaCombo()">➕ Añadir otro ingrediente</button>
+            <button onclick="guardarCombo()">💾 Guardar Receta</button>
+        </div>
+
+        <div class="card">
+            <h3>📖 Mi Recetario (Desglose)</h3>
+            <p style="font-size: 0.85em; color: var(--text-muted); margin-top: 0;">Consulta los ingredientes exactos de los combos que has creado.</p>
+            <select id="select-recetario" onchange="mostrarDetalleReceta()">
+                <option value="">-- Seleccionar Receta --</option>
+            </select>
+            <div id="detalle-receta" style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.7); border-radius: 8px; border: 1px solid rgba(0,0,0,0.05); display: none;"></div>
+            <button class="btn-outline-red" onclick="eliminarReceta()">🗑️ Eliminar Receta Seleccionada</button>
+        </div>
+
+        <div class="card">
+            <h3>📝 Notas de Preparación</h3>
+            <p style="font-size: 0.85em; color: var(--text-muted); margin-top: 0;">Guarda las instrucciones, tiempos de cocción y el paso a paso de tus comidas favoritas.</p>
+            <input type="text" id="nota-titulo" placeholder="Título (Ej: Masa de Pizza Alta Hidratación)">
+            <textarea id="nota-texto" rows="4" placeholder="Escribe el paso a paso aquí...&#10;1. Mezclar harina y agua.&#10;2. Dejar reposar..."></textarea>
+            <button class="btn-blue" onclick="guardarNotaReceta()">💾 Guardar Instrucciones</button>
+            <hr style="border: 0; border-top: 1px dashed rgba(0,0,0,0.1); margin: 20px 0;">
+            <select id="select-notas" onchange="mostrarNotaReceta()">
+                <option value="">-- Seleccionar Nota --</option>
+            </select>
+            <div id="detalle-nota" style="margin-top: 15px; padding: 20px; background: rgba(255, 249, 196, 0.4); border-radius: 8px; border: 1px solid rgba(0,0,0,0.05); display: none;">
+                <strong id="detalle-nota-titulo" style="color: var(--secondary); font-size: 1.1em; display: block; margin-bottom: 10px;"></strong>
+                <p id="detalle-nota-texto" style="font-size: 0.95em; color: #444; white-space: pre-wrap; margin: 0; line-height: 1.5;"></p>
+            </div>
+            <button class="btn-outline-red" onclick="eliminarNotaReceta()">🗑️ Eliminar Nota Seleccionada</button>
+        </div>
+    </div> <div id="tab-perfil" class="tab-content">
+        <div class="card">
+            <h3>👤 Mi Perfil Biométrico</h3>
+            <p style="font-size: 0.85em; color: var(--text-muted); margin-top: 0;">Actualiza tus datos para que el algoritmo recalcule tu Gasto Calórico Base automáticamente.</p>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label>Peso (kg)</label>
+                    <input type="number" id="input-peso" step="0.1">
+                </div>
+                <div style="flex: 1;">
+                    <label>Altura (cm)</label>
+                    <input type="number" id="input-altura">
+                </div>
+                <div style="flex: 1;">
+                    <label>Edad</label>
+                    <input type="number" id="input-edad">
+                </div>
+            </div>
+            <button class="btn-blue" onclick="guardarPerfil()">💾 Guardar y Recalcular Gasto</button>
+        </div>
+
+        <div class="card" style="border-top: 4px solid var(--secondary);">
+            <h3>💾 Sincronización y Respaldo Manual</h3>
+            <p style="font-size: 0.85em; color: var(--text-muted); margin-top: 0;">Tus datos se guardan en la nube. Usa estos botones solo para copias de seguridad locales (archivos .txt).</p>
+            <button class="btn-blue" onclick="exportarDatos()">📥 Descargar Backup (.txt)</button>
+            <input type="file" id="input-importar" style="display:none" accept=".txt" onchange="importarDatos(this)">
+            <button class="btn-cyan" onclick="document.getElementById('input-importar').click()">📤 Restaurar Backup (.txt)</button>
+        </div>
+    </div> </div> <script>
+    // --- LÓGICA DE NAVEGACIÓN DE PESTAÑAS (NUEVO) ---
+    function switchTab(tabId, element) {
+        // Ocultar todas las pestañas
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        // Quitar la clase 'active' de todos los botones de la barra inferior
+        document.querySelectorAll('.nav-item').forEach(nav => {
+            nav.classList.remove('active');
+        });
+        
+        // Mostrar la pestaña seleccionada y marcar el botón como activo
+        document.getElementById(tabId).classList.add('active');
+        if(element) element.classList.add('active');
+        
+        // Volver arriba de la página de forma suave
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+
     // --- VARIABLES DE ESTADO Y CONFIGURACIÓN CLOUD ---
-    
-    // ¡PEGA TU CONFIGURACIÓN DE FIREBASE AQUÍ!
     const firebaseConfig = {
         apiKey: "AIzaSyAuBsFDSQlx2ye8PcqdpJor6A29wag7zuE",
         authDomain: "macros-app-pro-e8702.firebaseapp.com",
@@ -365,7 +471,6 @@
         appId: "1:7677248069:web:10f41205bdb57aa61b192c"
     };
 
-    // Inicialización del Motor Firebase
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
@@ -531,33 +636,8 @@
         "zapallo_anco_hervido": { nombre: "Zapallo Anco (Hervido)", prot: 0.8, carb: 8.5, gras: 0.1, leu: 0.05, ig: 70 },
         "zapallo_anco_horno": { nombre: "Zapallo Anco (Al Horno)", prot: 1.0, carb: 11.5, gras: 0.2, leu: 0.06, ig: 80 },
         "zucchini": { nombre: "Zucchini", prot: 1.2, carb: 3.1, gras: 0.3, leu: 0.07, ig: 15 },
-	"pizza__pre_pizza__receta": { 
-            nombre: "Pizza (Pre pizza) (1 porción = 100%)", 
-            prot: 66.2, 
-            carb: 159.5, 
-            gras: 58.6, 
-            ig: 0, 
-            leu: 5.3, 
-            ingredientes: [
-                { nombre: "Prepizza (Masa de panadería c/salsa)", gramos: 300 },
-                { nombre: "Tomate Perita", gramos: 100 },
-                { nombre: "Queso Cremoso", gramos: 200 }
-            ] 
-        },
-        "pur__de_papas_receta": { 
-            nombre: "Puré de Papas (1 porción = 100%)", 
-            prot: 21.105, 
-            carb: 146.1216, 
-            gras: 15.1404, 
-            ig: 0, 
-            leu: 1.69, 
-            ingredientes: [
-                { nombre: "Papa (Hervida)", gramos: 703 },
-                { nombre: "Leche (Descremada)", gramos: 119 },
-                { nombre: "Manteca", gramos: 9 },
-                { nombre: "Queso Cremoso", gramos: 25 }
-            ] 
-        },
+        "pizza__pre_pizza__receta": { nombre: "Pizza (Pre pizza) (1 porción = 100%)", prot: 66.2, carb: 159.5, gras: 58.6, ig: 0, leu: 5.3, ingredientes: [ { nombre: "Prepizza (Masa de panadería c/salsa)", gramos: 300 }, { nombre: "Tomate Perita", gramos: 100 }, { nombre: "Queso Cremoso", gramos: 200 } ] },
+        "pur__de_papas_receta": { nombre: "Puré de Papas (1 porción = 100%)", prot: 21.105, carb: 146.1216, gras: 15.1404, ig: 0, leu: 1.69, ingredientes: [ { nombre: "Papa (Hervida)", gramos: 703 }, { nombre: "Leche (Descremada)", gramos: 119 }, { nombre: "Manteca", gramos: 9 }, { nombre: "Queso Cremoso", gramos: 25 } ] },
         "pur__de_papas": { nombre: "Puré de Papas", prot: 2.47, carb: 17, gras: 1.87, ig: 0, leu: 0.2 },
         "queso_cremoso_port_salut_light__la_paulina_": { nombre: "Queso Cremoso Port Salut Light (La Paulina)", prot: 26, carb: 1.5, gras: 10.7, ig: 0, leu: 2.47 },
         "guiso_de_arroz__receta_": { nombre: "Guiso de Arroz (Receta)", prot: 6.6, carb: 13, gras: 4.4, ig: 50, leu: 0.5 },
@@ -587,7 +667,6 @@
         BASE_KCAL = tmb * 1.2;
     }
 
-    // DEFINICIONES DE FUNCIONES PARA EVITAR ERRORES DE HOISTING
     function renderizarUI() {
         ['kcal', 'prot', 'carb', 'gras'].forEach(m => {
             let act = consumido.total[m], met = metas.total[m];
@@ -615,14 +694,14 @@
                     if (igPromedio <= 55) { badgeIg.innerText = `IG Bajo (${igPromedio.toFixed(0)})`; badgeIg.style.backgroundColor = "var(--primary)"; badgeIg.style.color = "white"; }
                     else if (igPromedio <= 69) { badgeIg.innerText = `IG Medio (${igPromedio.toFixed(0)})`; badgeIg.style.backgroundColor = "var(--warning)"; badgeIg.style.color = "black"; }
                     else { badgeIg.innerText = `IG Alto (${igPromedio.toFixed(0)})`; badgeIg.style.backgroundColor = "var(--danger)"; badgeIg.style.color = "white"; }
-                } else { badgeIg.innerText = "IG N/A"; badgeIg.style.backgroundColor = "#eee"; badgeIg.style.color = "#666"; }
+                } else { badgeIg.innerText = "IG N/A"; badgeIg.style.backgroundColor = "rgba(0,0,0,0.05)"; badgeIg.style.color = "#666"; }
             }
 
             let badgeLeu = document.getElementById(`badge-leu-${com}`);
             if (badgeLeu) {
                 let leuTotal = consumido[com].leu || 0;
                 if (leuTotal >= 2.5) { badgeLeu.innerText = `Leu: ${leuTotal.toFixed(1)}g ✓`; badgeLeu.style.backgroundColor = "var(--combo-color)"; badgeLeu.style.color = "white"; }
-                else { badgeLeu.innerText = `Leu: ${leuTotal.toFixed(1)}g`; badgeLeu.style.backgroundColor = "#eee"; badgeLeu.style.color = "#666"; }
+                else { badgeLeu.innerText = `Leu: ${leuTotal.toFixed(1)}g`; badgeLeu.style.backgroundColor = "rgba(0,0,0,0.05)"; badgeLeu.style.color = "#666"; }
             }
         });
     }
@@ -698,7 +777,6 @@
         });
     }
 
-    // --- FUNCIÓN MAESTRA DE GUARDADO EN LA NUBE ---
     function guardarEnNube() {
         const historialHTML = document.getElementById('historial-lista').innerHTML;
         docRef.set({
@@ -712,9 +790,7 @@
         }).catch(error => console.error("Error guardando en Firebase: ", error));
     }
 
-    // --- EVENTO DE ARRANQUE Y LECTURA EN TIEMPO REAL ---
     document.addEventListener('DOMContentLoaded', () => {
-        // Inicializar vistas con datos por defecto antes de que llegue la nube
         const diaHoy = new Date().getDay().toString();
         const selectDia = document.getElementById('select-dia');
         if(selectDia) selectDia.value = diaHoy;
@@ -724,7 +800,6 @@
         
         if (typeof agregarFilaCombo === "function") agregarFilaCombo(); 
 
-        // RADAR DE SINCRONIZACIÓN FIREBASE (Realtime)
         docRef.onSnapshot((doc) => {
             if (doc.exists) {
                 const data = doc.data();
@@ -754,24 +829,23 @@
         });
     });
 
-    // --- RESTO DE FUNCIONES DE LÓGICA ---
     function cargarRutina() {
         const id = document.getElementById('fuerza-rutina').value;
         const contenedor = document.getElementById('contenedor-ejercicios');
         contenedor.innerHTML = '';
         if (!id) return;
         const rutina = misRutinas[id];
-        let html = `<p style="font-size: 0.8em; color: var(--secondary); margin-bottom: 10px; font-weight: bold;">📝 Edita tus marcas de hoy. Al guardar, se actualizará tu base de datos para registrar la carga progresiva.</p>`;
+        let html = `<p style="font-size: 0.85em; color: var(--secondary); margin-bottom: 10px; font-weight: 600;">📝 Edita tus marcas de hoy. Al guardar, se actualizará tu base de datos para registrar la carga progresiva.</p>`;
         rutina.ejercicios.forEach((ej, index) => {
             html += `
-            <div style="background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px;">
-                <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px; color: #333;">${ej.nombre} 
-                    <span style="font-size: 0.75em; color: #888; font-weight: normal;">(${ej.descanso}s desc. | ${ej.tipo})</span>
+            <div style="background: rgba(255,255,255,0.7); padding: 12px; border: 1px solid rgba(0,0,0,0.05); border-radius: 8px; margin-bottom: 8px;">
+                <div style="font-weight: 700; font-size: 0.95em; margin-bottom: 8px; color: #333;">${ej.nombre} 
+                    <span style="font-size: 0.75em; color: var(--text-muted); font-weight: 400;">(${ej.descanso}s desc. | ${ej.tipo})</span>
                 </div>
                 <div style="display: flex; gap: 5px;">
-                    <input type="number" id="ej-${index}-series" value="${ej.series}" title="Series" style="flex: 1; padding: 8px; text-align: center;"> <span style="align-self: center; color: #666; font-weight: bold;">x</span>
-                    <input type="number" id="ej-${index}-reps" value="${ej.reps}" title="Repeticiones" style="flex: 1; padding: 8px; text-align: center;"> <span style="align-self: center; color: #666; font-weight: bold;">@</span>
-                    <input type="number" id="ej-${index}-peso" value="${ej.peso}" step="0.5" title="Peso (kg)" style="flex: 1.5; padding: 8px; text-align: center;"> <span style="align-self: center; font-size: 0.85em; color: #666;">kg</span>
+                    <input type="number" id="ej-${index}-series" value="${ej.series}" title="Series" style="flex: 1; padding: 10px; text-align: center;"> <span style="align-self: center; color: var(--text-muted); font-weight: bold;">x</span>
+                    <input type="number" id="ej-${index}-reps" value="${ej.reps}" title="Repeticiones" style="flex: 1; padding: 10px; text-align: center;"> <span style="align-self: center; color: var(--text-muted); font-weight: bold;">@</span>
+                    <input type="number" id="ej-${index}-peso" value="${ej.peso}" step="0.5" title="Peso (kg)" style="flex: 1.5; padding: 10px; text-align: center;"> <span style="align-self: center; font-size: 0.85em; color: var(--text-muted);">kg</span>
                 </div>
             </div>`;
         });
@@ -868,7 +942,7 @@
         
         const div = document.createElement('div');
         div.className = 'log-item';
-        div.innerHTML = `<div style="display: flex; justify-content: space-between; align-items: center;"><div><strong><span class="badge" style="background: var(--act-color); color: white;">ACTIVIDAD</span> ${descripcion}</strong><br><span style="color:#666; font-size:0.9em;">Añade +${kcalQuemadas.toFixed(0)} kcal a tu meta diaria</span></div><button class="btn-delete" onclick="eliminarActividad(this, ${kcalQuemadas})">❌</button></div>`;
+        div.innerHTML = `<div style="display: flex; justify-content: space-between; align-items: center;"><div><strong><span class="badge" style="background: var(--act-color); color: white;">ACTIVIDAD</span> ${descripcion}</strong><br><span style="color:var(--text-muted); font-size:0.9em;">Añade +${kcalQuemadas.toFixed(0)} kcal a tu meta diaria</span></div><button class="btn-delete" onclick="eliminarActividad(this, ${kcalQuemadas})">❌</button></div>`;
         const cont = document.getElementById('historial-lista');
         if(document.getElementById('msg-vacio')) cont.innerHTML = '';
         cont.insertBefore(div, cont.firstChild);
@@ -881,7 +955,7 @@
         gastoActividadFisica = Math.max(0, gastoActividadFisica - kcal);
         boton.parentElement.parentElement.remove();
         const cont = document.getElementById('historial-lista');
-        if (cont.children.length === 0) cont.innerHTML = '<p id="msg-vacio" style="color: #666; font-style: italic;">Aún no has registrado alimentos hoy.</p>';
+        if (cont.children.length === 0) cont.innerHTML = '<p id="msg-vacio" style="color: #999; font-style: italic; text-align: center;">Aún no has registrado alimentos hoy.</p>';
         guardarEnNube(); 
     }
 
@@ -950,7 +1024,7 @@
         const div = document.getElementById('detalle-receta');
         if (!key) { div.style.display = 'none'; return; }
         const receta = baseAlimentos[key];
-        let html = `<h4 style="margin: 0 0 5px 0; color: var(--secondary);">${receta.nombre.replace(" (1 porción = 100%)", "")}</h4><span style="font-size: 0.85em; color: #666;">Proteínas: ${receta.prot.toFixed(1)}g | Carbohidratos: ${receta.carb.toFixed(1)}g | Grasas: ${receta.gras.toFixed(1)}g</span><hr style="border: 0; border-top: 1px dashed #ccc; margin: 10px 0;"><ul style="margin-top: 5px; margin-bottom: 0; padding-left: 20px; font-size: 0.9em; color: #333;">`;
+        let html = `<h4 style="margin: 0 0 5px 0; color: var(--secondary);">${receta.nombre.replace(" (1 porción = 100%)", "")}</h4><span style="font-size: 0.85em; color: var(--text-muted);">Proteínas: ${receta.prot.toFixed(1)}g | Carbohidratos: ${receta.carb.toFixed(1)}g | Grasas: ${receta.gras.toFixed(1)}g</span><hr style="border: 0; border-top: 1px dashed rgba(0,0,0,0.1); margin: 10px 0;"><ul style="margin-top: 5px; margin-bottom: 0; padding-left: 20px; font-size: 0.9em; color: var(--text-main);">`;
         receta.ingredientes.forEach(ing => { html += `<li><strong>${ing.gramos}g</strong> de ${ing.nombre}</li>`; });
         div.innerHTML = html + `</ul>`; div.style.display = 'block';
     }
@@ -1049,7 +1123,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <strong><span class="badge">${com.toUpperCase()}</span> ${gramos.toFixed(0)}g de ${al.nombre}</strong><br>
-                    <span style="color:#666; font-size:0.9em;">+${k.toFixed(0)} kcal | P: ${p.toFixed(1)}g | C: ${c.toFixed(1)}g | G: ${g.toFixed(1)}g | Leu: ${leuPorcion.toFixed(1)}g${textoIg}</span>
+                    <span style="color:var(--text-muted); font-size:0.9em;">+${k.toFixed(0)} kcal | P: ${p.toFixed(1)}g | C: ${c.toFixed(1)}g | G: ${g.toFixed(1)}g | Leu: ${leuPorcion.toFixed(1)}g${textoIg}</span>
                 </div>
                 <button class="btn-delete" onclick="eliminarRegistro(this, ${k}, ${p}, ${c}, ${g}, ${cgPorcion}, ${leuPorcion}, '${com}')">❌</button>
             </div>`;
@@ -1068,7 +1142,7 @@
         });
         boton.parentElement.parentElement.remove();
         const cont = document.getElementById('historial-lista');
-        if (cont.children.length === 0) cont.innerHTML = '<p id="msg-vacio" style="color: #666; font-style: italic;">Aún no has registrado alimentos hoy.</p>';
+        if (cont.children.length === 0) cont.innerHTML = '<p id="msg-vacio" style="color: #999; font-style: italic; text-align: center;">Aún no has registrado alimentos hoy.</p>';
         guardarEnNube();
     }
 
@@ -1076,7 +1150,7 @@
         if(confirm("¿Seguro que quieres borrar el registro de hoy? Tus metas y alimentos NO se borrarán.")) {
             ['total', 'desayuno', 'almuerzo', 'merienda', 'cena'].forEach(m => { consumido[m] = { kcal: 0, prot: 0, carb: 0, gras: 0, cg: 0, leu: 0 }; });
             gastoActividadFisica = 0; 
-            document.getElementById('historial-lista').innerHTML = '<p id="msg-vacio" style="color: #666; font-style: italic;">Aún no has registrado alimentos hoy.</p>';
+            document.getElementById('historial-lista').innerHTML = '<p id="msg-vacio" style="color: #999; font-style: italic; text-align: center;">Aún no has registrado alimentos hoy.</p>';
             guardarEnNube();
         }
     }
